@@ -1448,6 +1448,13 @@
     schema-utils "^2.6.5"
     source-map "^0.7.3"
 
+"@react-chess/chessground@^1.1.0":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@react-chess/chessground/-/chessground-1.1.0.tgz#19a79cc44cc3cbdf229f7c11ab0f336a26c53c9d"
+  integrity sha512-/beYFNzwfDjJZH+rgLGUV8hCCv5Pc+LUtUawtZXUPiK5pmvQX1CQqG1muyvZFScfptTmxO/OXnGuefVkZ1Izkg==
+  dependencies:
+    chessground "^7.11.1"
+
 "@rollup/plugin-node-resolve@^7.1.1":
   version "7.1.3"
   resolved "https://registry.yarnpkg.com/@rollup/plugin-node-resolve/-/plugin-node-resolve-7.1.3.tgz#80de384edfbd7bfc9101164910f86078151a3eca"
@@ -1687,6 +1694,11 @@
   integrity sha512-kSjgDMZONiIfSH1Nxcr5JIRMwUetDki63FSQfpTCz8ogF3Ulqm8+mr5f78dUYs6vMiB6gBusQqfQmBvHZj/lwg==
   dependencies:
     "@babel/types" "^7.3.0"
+
+"@types/chess.js@^0.11.2":
+  version "0.11.2"
+  resolved "https://registry.yarnpkg.com/@types/chess.js/-/chess.js-0.11.2.tgz#e5d5f502b38f24efe854572ee33a939e1e395005"
+  integrity sha512-ZgT0f5Dm1x+kjA/RhCQpBM2NoUGkdk9JFdwncW7/GdqzHCOkLsOTq4k/EKRiRTCFLXR4fTKk8j7KNOmzzHQVgg==
 
 "@types/eslint@^7.2.6":
   version "7.2.6"
@@ -3202,6 +3214,21 @@ check-types@^11.1.1:
   version "11.1.2"
   resolved "https://registry.yarnpkg.com/check-types/-/check-types-11.1.2.tgz#86a7c12bf5539f6324eb0e70ca8896c0e38f3e2f"
   integrity sha512-tzWzvgePgLORb9/3a0YenggReLKAIb2owL03H2Xdoe5pKcUyWRSEQ8xfCar8t2SIAuEDwtmx2da1YB52YuHQMQ==
+
+chess.js@^0.12.0:
+  version "0.12.0"
+  resolved "https://registry.yarnpkg.com/chess.js/-/chess.js-0.12.0.tgz#ffca1773b93a4aa044891de81286e264ca229b00"
+  integrity sha512-eF1xf4j88r/AwIRxqV1FXZbVgMt4yUx05xrL+ZMqUrY+snFrUxGVHs0VgEd3AvngujDE9th7XZqqCwEKEQ7mWQ==
+
+chessground@^7.11.1:
+  version "7.12.0"
+  resolved "https://registry.yarnpkg.com/chessground/-/chessground-7.12.0.tgz#92d9726afc9d019c04ded83997c6ba2e6f8f93ff"
+  integrity sha512-MQG7c4Hsy1dCkMFFv4LTaRauVSmWF8/dukion1qLCh5pIcKyoa5onbmbglAdDXOYhBbAZVf1F289wy0DeDEBJQ==
+
+chessground@^8.1.7:
+  version "8.1.7"
+  resolved "https://registry.yarnpkg.com/chessground/-/chessground-8.1.7.tgz#bbc2280597c009feee5f289f4a62fb7cb0347c2a"
+  integrity sha512-YpFFxsA+WrfAuCCudLennESuMEaZVnC8HJNVUvBJYPdtQSTOx5D7hZhtjWuwEe9jJP9bHhA6mOYOT6NmfS84qQ==
 
 chokidar@^2.1.8:
   version "2.1.8"
