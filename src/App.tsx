@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Chessground } from "chessground";
-import ChessgroundComponent from "@react-chess/chessground";
+import Chessground from "@react-chess/chessground";
 import "./App.css";
 import { ChessInstance, ShortMove } from "chess.js";
 import { Key, Role, Dests, Color, colors } from "chessground/types";
@@ -79,7 +78,9 @@ function App() {
   };
   return (
     <div className="App" id="chessboard">
-      <ChessgroundComponent config={{ fen: fen, ...config }} />
+      <div className="main">
+        <Chessground config={{ fen: fen, ...config }} />
+      </div>
     </div>
   );
 }
