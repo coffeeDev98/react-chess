@@ -51,11 +51,14 @@ function App() {
         return;
       }
     }
-    if (chess.move(move)) {
+    const moveVerbose = chess.move(move);
+    if (moveVerbose) {
+      console.log(moveVerbose.san);
       setFen(chess.fen());
       setLastMove([move.from, move.to]);
     }
   };
+
   const handleMoveUndo = () => {
     const lastMoveVerbose = chess.undo();
     setLastMove([lastMoveVerbose?.from, lastMoveVerbose?.to]);
@@ -88,7 +91,7 @@ function App() {
       showDests: true,
       events: {
         after: (from: any, to: any, metadeta: any) => {
-          console.log("metadata: ", { from, to, metadeta });
+          // console.log("metadata: ", { from, to, metadeta });
           return handleMove({ from: from, to: to });
         },
       },
@@ -118,49 +121,45 @@ function App() {
     },
   };
   return (
-    <div className="App" id="chessboard">
-      {promotionModal && (
-        <div style={{ textAlign: "center" }}>
-          Promote To?
-          <div style={{ textAlign: "center", cursor: "pointer" }}>
-            <span role="presentation" onClick={() => promotion("q")}>
-              <img src={queen} alt="" style={{ width: 50 }} />
-            </span>
-            <span role="presentation" onClick={() => promotion("r")}>
-              <img src={rook} alt="" style={{ width: 50 }} />
-            </span>
-            <span role="presentation" onClick={() => promotion("b")}>
-              <img src={bishop} alt="" style={{ width: 50 }} />
-            </span>
-            <span role="presentation" onClick={() => promotion("n")}>
-              <img src={knight} alt="" style={{ width: 50 }} />
-            </span>
+    <div className="app" id="chessboard">
+      <div className="side-section">
+        {promotionModal && (
+          <div className="piece-promotion-prompt">
+            Promote To?
+            <div className="roles">
+              <span role="presentation" onClick={() => promotion("q")}>
+                <img src={queen} alt="" style={{ width: 50 }} />
+              </span>
+              <span role="presentation" onClick={() => promotion("r")}>
+                <img src={rook} alt="" style={{ width: 50 }} />
+              </span>
+              <span role="presentation" onClick={() => promotion("b")}>
+                <img src={bishop} alt="" style={{ width: 50 }} />
+              </span>
+              <span role="presentation" onClick={() => promotion("n")}>
+                <img src={knight} alt="" style={{ width: 50 }} />
+              </span>
+            </div>
           </div>
-        </div>
-      )}
-      <div className="main">
+        )}
+        {chess.fen() !==
+          "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" && (
+          <div className="undo-btn" onClick={handleMoveUndo}>
+            Undo
+          </div>
+        )}
+      </div>
+      <div className="main-chessboard">
         <Chessground
-          width={innerWidth < innerHeight ? innerWidth : innerHeight}
-          height={innerWidth < innerHeight ? innerWidth : innerHeight}
+          width={
+            innerWidth < innerHeight ? innerWidth * 0.5 : innerHeight * 0.5
+          }
+          height={
+            innerWidth < innerHeight ? innerWidth * 0.5 : innerHeight * 0.5
+          }
           config={{ ...config }}
         />
       </div>
-      {chess.fen() !==
-        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" && (
-        <div
-          style={{
-            textAlign: "center",
-            cursor: "pointer",
-            position: "absolute",
-            bottom: 0,
-            left: "50%",
-            transform: "translate(-50%,0)",
-          }}
-          onClick={handleMoveUndo}
-        >
-          Undo
-        </div>
-      )}
     </div>
   );
 }
