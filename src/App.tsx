@@ -8,6 +8,13 @@ import rook from "./assets/images/wR.svg";
 import bishop from "./assets/images/wB.svg";
 import knight from "./assets/images/wN.svg";
 import { updateDimensions } from "./utils";
+import AgoraRTM, {
+  RtmChannel,
+  RtmClient,
+  RtmMessage,
+  RtmTextMessage,
+} from "agora-rtm-sdk";
+import axios from "axios";
 const Chess = require("chess.js");
 
 declare let window: any;
@@ -23,6 +30,67 @@ function App() {
   const [innerWidth, setInnerWidth] = useState(window.innerWidth);
   const [innerHeight, setInnerHeight] = useState(window.innerHeight);
   // const [selectedChesspiece, setSelectedChesspiece] = useState<any>();
+
+  // AGORA INTEGRATION
+  const [chatHistory, setChatHistory] = useState<any>([]);
+  const appId = "f4b36b6c897e41bfaa3904d75da40777";
+  const client: RtmClient | null = AgoraRTM.createInstance(appId);
+  let channel: RtmChannel | null = null;
+  useEffect(() => {
+    playerLogin().then(() => {
+      console.log("integrations successful");
+    });
+  }, []);
+  // useEffect(() => {
+  //   console.log(chatHistory);
+  // }, [chatHistory]);
+  const playerLogin = async () => {
+    const playerMeta = {
+      uid: (Math.floor(Math.random() * 90000) + 10000).toString(),
+      token: "",
+    };
+    axios
+      .get(
+        `http://localhost:8080/access_token?channel=test&uid=${playerMeta.uid}`
+      )
+      .then((res: any) => {
+        console.log(res);
+        playerMeta.token = res.data?.token || "";
+        console.log("LOGIN OPTIONS: ", playerMeta);
+        client.login(playerMeta).then(() => {
+          console.log("Login successful");
+          channel = client.createChannel("test");
+          // Executed when message is received
+          channel.on("ChannelMessage", (message: any) => {
+            console.log(message);
+            setChatHistory([...chatHistory, message]);
+          });
+          channel.on("MemberJoined", function (memberId) {
+            console.log("New member joined: ", memberId);
+          });
+
+          channel.join().then(() => {
+            const msgObject: RtmTextMessage = {
+              text: "Hello",
+              messageType: "TEXT",
+            };
+            channel?.sendMessage(msgObject).then(() => {
+              // setChatHistory([...chatHistory, msgObject]);
+            });
+          });
+        });
+      });
+  };
+
+  const sendMsgInChannel = (message: string) => {
+    const msgObject: RtmTextMessage = {
+      text: message || "",
+      messageType: "TEXT",
+    };
+    console.log("channel:", channel);
+    channel?.sendMessage(msgObject);
+  };
+  // AGORA INTEGRATION END
 
   useEffect(() => {
     updateDimensions();
@@ -43,6 +111,8 @@ function App() {
 
   const handleMove = (move: ShortMove) => {
     const moves = chess.moves({ verbose: true });
+    console.log("moves: ", chess.moves());
+
     for (let i = 0, len = moves.length; i < len; i++) {
       /* eslint-disable-line */
       if (moves[i].flags.indexOf("p") !== -1 && moves[i].from === move.from) {
@@ -55,6 +125,8 @@ function App() {
     if (moveVerbose) {
       console.log(moveVerbose.san);
       setFen(chess.fen());
+      const gameOverCheck = chess.game_over();
+      console.log("game-over: ", gameOverCheck);
       setLastMove([move.from, move.to]);
     }
   };
@@ -148,6 +220,33 @@ function App() {
             Undo
           </div>
         )}
+        <div>
+          {/* <div
+            className="chat-section"
+            style={{ padding: 10, border: "black" }}
+          >
+            {chatHistory.map((chatItem: any, index: number) => (
+              <div key={index}>
+                <span>
+                  <strong>{chatItem.text}</strong>
+                </span>
+              </div>
+            ))}
+          </div> */}
+          <div style={{ display: "flex" }}>
+            <input type="text" id="chatbox" />
+            <button
+              onClick={() => {
+                sendMsgInChannel(
+                  window.document.getElementById("chatbox").value
+                );
+              }}
+              style={{ padding: 10 }}
+            >
+              Send
+            </button>
+          </div>
+        </div>
       </div>
       <div className="main-chessboard">
         <Chessground
