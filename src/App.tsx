@@ -32,63 +32,87 @@ function App() {
   // const [selectedChesspiece, setSelectedChesspiece] = useState<any>();
 
   // AGORA INTEGRATION
-  const [chatHistory, setChatHistory] = useState<any>([]);
+  const [channel, setChannel] = useState<RtmChannel | null>(null);
+  const [chatHistory, setChatHistory] = useState<RtmTextMessage[]>([]);
   const appId = "f4b36b6c897e41bfaa3904d75da40777";
   const client: RtmClient | null = AgoraRTM.createInstance(appId);
-  let channel: RtmChannel | null = null;
+  let playerMeta = {
+    uid: (Math.floor(Math.random() * 90000) + 10000).toString(),
+    token: "",
+  };
+  // let channel: RtmChannel | null = null;
   useEffect(() => {
     playerLogin().then(() => {
       console.log("integrations successful");
     });
   }, []);
-  // useEffect(() => {
-  //   console.log(chatHistory);
-  // }, [chatHistory]);
+
+  useEffect(() => {
+    if (channel) {
+      // Channel listeners
+      // Executed when message is received
+      channel?.on("ChannelMessage", (message: any, memberId: any) => {
+        console.log("MESSAGE: ", message, [chatHistory, message]);
+        // setChatHistory([...chatHistory, message]);
+        const parsedTextMessage = JSON.parse(message.text);
+        window.document
+          .getElementById("chat-section")
+          .appendChild(document.createElement("div"))
+          .append(`${parsedTextMessage.uid}: ${parsedTextMessage.msg}`);
+      });
+      channel?.on("MemberJoined", function (memberId) {
+        console.log("New member joined: ", memberId);
+      });
+
+      channel?.join();
+      // .then(() => {
+      //   const msgObject: RtmTextMessage = {
+      //     text: "Hello",
+      //     messageType: "TEXT",
+      //   };
+      //   channel?.sendMessage(msgObject).then(() => {
+      //     setChatHistory([...chatHistory, msgObject]);
+      //   });
+      // });
+    }
+  }, [channel]);
+  useEffect(() => {
+    console.log("CHAT HISTORY: ", chatHistory);
+  }, [chatHistory]);
   const playerLogin = async () => {
-    const playerMeta = {
-      uid: (Math.floor(Math.random() * 90000) + 10000).toString(),
-      token: "",
-    };
     axios
       .get(
-        `http://localhost:8080/access_token?channel=test&uid=${playerMeta.uid}`
+        `https://agoratokenserver-demo.herokuapp.com/access_token?channel=test&uid=${playerMeta.uid}`
       )
       .then((res: any) => {
         console.log(res);
         playerMeta.token = res.data?.token || "";
-        console.log("LOGIN OPTIONS: ", playerMeta);
+        // console.log("LOGIN OPTIONS: ", playerMeta);
         client.login(playerMeta).then(() => {
           console.log("Login successful");
-          channel = client.createChannel("test");
-          // Executed when message is received
-          channel.on("ChannelMessage", (message: any) => {
-            console.log(message);
-            setChatHistory([...chatHistory, message]);
-          });
-          channel.on("MemberJoined", function (memberId) {
-            console.log("New member joined: ", memberId);
-          });
-
-          channel.join().then(() => {
-            const msgObject: RtmTextMessage = {
-              text: "Hello",
-              messageType: "TEXT",
-            };
-            channel?.sendMessage(msgObject).then(() => {
-              // setChatHistory([...chatHistory, msgObject]);
-            });
-          });
+          setChannel(client.createChannel("test"));
         });
       });
   };
 
   const sendMsgInChannel = (message: string) => {
+    const textObject: {
+      uid: string;
+      msg: string;
+    } = {
+      uid: playerMeta.uid,
+      msg: message,
+    };
     const msgObject: RtmTextMessage = {
-      text: message || "",
+      text: JSON.stringify(textObject) || "",
       messageType: "TEXT",
     };
-    console.log("channel:", channel);
-    channel?.sendMessage(msgObject);
+    channel?.sendMessage(msgObject).then(() => {
+      window.document
+        .getElementById("chat-section")
+        .appendChild(document.createElement("div"))
+        .append(`${playerMeta.uid}: ${textObject.msg}`);
+    });
   };
   // AGORA INTEGRATION END
 
@@ -221,18 +245,11 @@ function App() {
           </div>
         )}
         <div>
-          {/* <div
+          <div
+            id="chat-section"
             className="chat-section"
             style={{ padding: 10, border: "black" }}
-          >
-            {chatHistory.map((chatItem: any, index: number) => (
-              <div key={index}>
-                <span>
-                  <strong>{chatItem.text}</strong>
-                </span>
-              </div>
-            ))}
-          </div> */}
+          ></div>
           <div style={{ display: "flex" }}>
             <input type="text" id="chatbox" />
             <button
