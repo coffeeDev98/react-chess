@@ -1,120 +1,32 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { Key } from "chessground/types";
 import Chessground from "@react-chess/chessground";
-import "./App.css";
-import { ChessInstance, PieceType, ShortMove } from "chess.js";
-import { Key, Role, Dests, Color, colors } from "chessground/types";
+import useChess from "./hooks/useChess";
 import queen from "./assets/images/wQ.svg";
 import rook from "./assets/images/wR.svg";
 import bishop from "./assets/images/wB.svg";
 import knight from "./assets/images/wN.svg";
-import { updateDimensions } from "./utils";
-import AgoraRTM, {
-  RtmChannel,
-  RtmClient,
-  RtmMessage,
-  RtmTextMessage,
-} from "agora-rtm-sdk";
-import axios from "axios";
-const Chess = require("chess.js");
+import "./App.css";
+import useAgora from "./hooks/useAgora";
 
 declare let window: any;
 
 function App() {
-  const [chess] = useState<ChessInstance>(
-    new Chess("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
-  );
-  const [fen, setFen] = useState(chess.fen());
-  const [pendingMove, setPendingMove] = useState<any>();
-  const [promotionModal, setPromotionModal] = useState(false);
-  const [lastMove, setLastMove] = useState<any>();
+  const {
+    chess,
+    turnColor,
+    undoMove,
+    lastMove,
+    fen,
+    promotion,
+    calcMovable,
+    promotionModal,
+    movesLog,
+  } = useChess();
+  const { sendMsgInChannel } = useAgora();
+
   const [innerWidth, setInnerWidth] = useState(window.innerWidth);
   const [innerHeight, setInnerHeight] = useState(window.innerHeight);
-  // const [selectedChesspiece, setSelectedChesspiece] = useState<any>();
-
-  // AGORA INTEGRATION
-  const [channel, setChannel] = useState<RtmChannel | null>(null);
-  const [chatHistory, setChatHistory] = useState<RtmTextMessage[]>([]);
-  const appId = "f4b36b6c897e41bfaa3904d75da40777";
-  const client: RtmClient | null = AgoraRTM.createInstance(appId);
-  let playerMeta = {
-    uid: (Math.floor(Math.random() * 90000) + 10000).toString(),
-    token: "",
-  };
-  // let channel: RtmChannel | null = null;
-  useEffect(() => {
-    playerLogin().then(() => {
-      console.log("integrations successful");
-    });
-  }, []);
-
-  useEffect(() => {
-    if (channel) {
-      // Channel listeners
-      // Executed when message is received
-      channel?.on("ChannelMessage", (message: any, memberId: any) => {
-        console.log("MESSAGE: ", message, [chatHistory, message]);
-        // setChatHistory([...chatHistory, message]);
-        const parsedTextMessage = JSON.parse(message.text);
-        window.document
-          .getElementById("chat-section")
-          .appendChild(document.createElement("div"))
-          .append(`${parsedTextMessage.uid}: ${parsedTextMessage.msg}`);
-      });
-      channel?.on("MemberJoined", function (memberId) {
-        console.log("New member joined: ", memberId);
-      });
-
-      channel?.join();
-      // .then(() => {
-      //   const msgObject: RtmTextMessage = {
-      //     text: "Hello",
-      //     messageType: "TEXT",
-      //   };
-      //   channel?.sendMessage(msgObject).then(() => {
-      //     setChatHistory([...chatHistory, msgObject]);
-      //   });
-      // });
-    }
-  }, [channel]);
-  useEffect(() => {
-    console.log("CHAT HISTORY: ", chatHistory);
-  }, [chatHistory]);
-  const playerLogin = async () => {
-    axios
-      .get(
-        `https://agoratokenserver-demo.herokuapp.com/access_token?channel=test&uid=${playerMeta.uid}`
-      )
-      .then((res: any) => {
-        console.log(res);
-        playerMeta.token = res.data?.token || "";
-        // console.log("LOGIN OPTIONS: ", playerMeta);
-        client.login(playerMeta).then(() => {
-          console.log("Login successful");
-          setChannel(client.createChannel("test"));
-        });
-      });
-  };
-
-  const sendMsgInChannel = (message: string) => {
-    const textObject: {
-      uid: string;
-      msg: string;
-    } = {
-      uid: playerMeta.uid,
-      msg: message,
-    };
-    const msgObject: RtmTextMessage = {
-      text: JSON.stringify(textObject) || "",
-      messageType: "TEXT",
-    };
-    channel?.sendMessage(msgObject).then(() => {
-      window.document
-        .getElementById("chat-section")
-        .appendChild(document.createElement("div"))
-        .append(`${playerMeta.uid}: ${textObject.msg}`);
-    });
-  };
-  // AGORA INTEGRATION END
 
   useEffect(() => {
     updateDimensions();
@@ -122,77 +34,10 @@ function App() {
 
     return () => window.removeEventListener("resize", updateDimensions);
   }, []);
-  useEffect(() => {
-    console.log("pendingMove: ", pendingMove);
-  }, [pendingMove]);
 
   const updateDimensions = () => {
     setInnerWidth(window.innerWidth);
     setInnerHeight(window.innerHeight);
-  };
-
-  const turnColor = () => (chess.turn() === "w" ? colors[0] : colors[1]);
-
-  const handleMove = (move: ShortMove) => {
-    const moves = chess.moves({ verbose: true });
-    console.log("moves: ", chess.moves());
-
-    for (let i = 0, len = moves.length; i < len; i++) {
-      /* eslint-disable-line */
-      if (moves[i].flags.indexOf("p") !== -1 && moves[i].from === move.from) {
-        setPendingMove([move.from, move.to]);
-        setPromotionModal(true);
-        return;
-      }
-    }
-    const moveVerbose = chess.move(move);
-    if (moveVerbose) {
-      console.log(moveVerbose.san);
-      setFen(chess.fen());
-      const gameOverCheck = chess.game_over();
-      console.log("game-over: ", gameOverCheck);
-      setLastMove([move.from, move.to]);
-    }
-  };
-
-  const handleMoveUndo = () => {
-    const lastMoveVerbose = chess.undo();
-    setLastMove([lastMoveVerbose?.from, lastMoveVerbose?.to]);
-    setFen(chess.fen());
-  };
-
-  const promotion = (e?: Exclude<PieceType, "p" | "k">) => {
-    const from = pendingMove[0];
-    const to = pendingMove[1];
-    chess.move({ from, to, promotion: e });
-    setFen(chess.fen());
-    // setLastMove([from, to])
-    setPromotionModal(false);
-  };
-
-  const calcMovable = () => {
-    const dests = new Map();
-    chess.SQUARES.forEach((s) => {
-      const ms = chess.moves({ square: s, verbose: true });
-      if (ms.length)
-        dests.set(
-          s,
-          ms.map((m) => m.to)
-        );
-    });
-
-    return {
-      free: false,
-      dests: dests,
-      showDests: true,
-      events: {
-        after: (from: any, to: any, metadeta: any) => {
-          // console.log("metadata: ", { from, to, metadeta });
-          return handleMove({ from: from, to: to });
-        },
-      },
-      rookCastle: true,
-    };
   };
 
   let config = {
@@ -204,7 +49,12 @@ function App() {
     lastMove: lastMove,
     highlight: {
       lastMove: true,
+      check: true,
     },
+    // animation: {
+    //   enabled: true,
+    //   duration: 5000,
+    // },
     selectable: {
       enabled: true,
     },
@@ -219,6 +69,11 @@ function App() {
   return (
     <div className="app" id="chessboard">
       <div className="side-section">
+        <div>
+          {movesLog?.map((move: String) => (
+            <>{move}, </>
+          ))}
+        </div>
         {promotionModal && (
           <div className="piece-promotion-prompt">
             Promote To?
@@ -240,7 +95,12 @@ function App() {
         )}
         {chess.fen() !==
           "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" && (
-          <div className="undo-btn" onClick={handleMoveUndo}>
+          <div
+            className="undo-btn"
+            onClick={() => {
+              undoMove();
+            }}
+          >
             Undo
           </div>
         )}
